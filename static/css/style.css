@@ -4,3 +4,8 @@
     margin-left: 5%;
     margin-top: 5%;
 }
+
+.searchResults {
+    position: absolute;
+    display: block;
+}

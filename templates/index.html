@@ -10,10 +10,13 @@
 </head>
 <body>
   <input id="addToMap" type=text>
-  <button onclick="displayObjectOnMap(mymap, document.getElementById('addToMap').value)">Add to map</button>
+  <button onclick="searchFor()">Add to map</button>
   
   <input id="toggleTileLayer" checked=True type=checkbox onchange="toggleTileLayer(mymap, document.getElementById('toggleTileLayer').checked)">
   <label for="toggleTileLayer">Toggle background</label>
+  <ul id="searchResults" class="searchResults" style="display:none">
+  </ul>
+  <ul id="addedLayers" class="addedLayer"></ul>
   <div id="mapid">
   </div>
 </body>
