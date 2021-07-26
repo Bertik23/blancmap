@@ -10,25 +10,27 @@ function displayObjectOnMap(map, object){
 
   var polygon = drawGeoJson(mymap, object)
   console.log("Added to map")
-  //console.log(polygon.getBounds())
   mymap.fitBounds([[bbox[1], bbox[0]], [bbox[3], bbox[2]]]);
 
 
   var addedLayers = document.getElementById("addedLayers")
   var li = document.createElement("li")
+  var span = document.createElement("span")
   var delButton = document.createElement("button")
   var colorPicker = document.createElement("input")
-  for (a of [li, delButton, colorPicker]){
+  for (a of [li, delButton, colorPicker, span]){
     a.dataset.id = polygon._leaflet_id;
   }
+  span.classList.add("layerControls")
   colorPicker.type = "color"
   colorPicker.value = "#3388ff"
   colorPicker.onchange = function (){getLayerId(mymap, this.dataset.id).setStyle({"color": this.value})}
   li.innerHTML = object["properties"]["display_name"]
   delButton.innerHTML = '<i class="bi bi-trash"></i>'
   delButton.onclick = function(){removeLayerId(mymap, this.dataset.id); this.remove()}
-  li.appendChild(colorPicker)
-  li.appendChild(delButton)
+  span.appendChild(colorPicker)
+  span.appendChild(delButton)
+  li.appendChild(span)
   addedLayers.appendChild(li)
 }
 
@@ -81,6 +83,12 @@ function removeLayerId(map, id){
   map.eachLayer(function(layer){if (layer._leaflet_id == id){layer.removeFrom(map)}})
 }
 
+/**
+ * Get the layer with id.
+ * @param {L.Map} map 
+ * @param {Number} id 
+ * @returns {L.Layer}
+ */
 function getLayerId(map, id){
   var layer;
   map.eachLayer(function(l){if (l._leaflet_id == id){console.log("Jeah"); layer = l}})

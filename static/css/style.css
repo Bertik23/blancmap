@@ -1,11 +1,30 @@
 #mapid {
-    height: 90%;
-    width: 90%;
-    margin-left: 5%;
-    margin-top: 5%;
+    height: 100%;
+    width: 100%;
 }
 
 .searchResults {
-    position: absolute;
-    display: block;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+}
+
+body {
+    height: 100%
+}
+
+.footerCustom{
+    display: flex;
+    flex: 0 1 40px;
+}
+
+#addedLayers li{
+    padding: .2em;
+    list-style: none;
+    border: 1px solid #FAFAFA;
+    /*vertical-align: middle;*/
+}
+
+.layerControls{
+    float: right;
 }
