@@ -6,49 +6,36 @@ var tilelayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
 
 function displayObjectOnMap(map, object){
   var type = object["geometry"]["type"]
+  var bbox = object["bbox"]
 
-
-  switch (type){
-    case "Polygon":
-      var coords = object["geometry"]["coordinates"][0]
-      break
-    case "LineString":
-      var coords = object["geometry"]["coordinates"]
-      break
-    case "Point":
-      var coords = [object["geometry"]["coordinates"]]
-      break
-  }
-  var newCoords = []
-  console.log(coords.length)
-  for (var a=0; a < coords.length; a++){
-    newCoords = newCoords.concat([[coords[a][1], coords[a][0]]])
-  }
-
-  console.log(newCoords)
-  switch (type){
-    case "Polygon":
-      var polygon = L.polygon(newCoords).addTo(map)
-      break
-    case "LineString":
-      console.log(type, "Line")
-      var polygon = L.polyline(newCoords).addTo(map)
-      break
-    case "Point":
-      console.log(type, "Pointík")
-      var polygon = L.marker(newCoords[0]).addTo(map)
-      break
-  }
+  var polygon = drawGeoJson(mymap, object)
   console.log("Added to map")
-  try {mymap.fitBounds(polygon.getBounds());}
-  catch {}
+  //console.log(polygon.getBounds())
+  mymap.fitBounds([[bbox[1], bbox[0]], [bbox[3], bbox[2]]]);
+
 
   var addedLayers = document.getElementById("addedLayers")
-  var li = document.createElement("button")
+  var li = document.createElement("li")
+  var delButton = document.createElement("button")
+  var colorPicker = document.createElement("input")
+  for (a of [li, delButton, colorPicker]){
+    a.dataset.id = polygon._leaflet_id;
+  }
+  colorPicker.type = "color"
+  colorPicker.value = "#3388ff"
+  colorPicker.onchange = function (){getLayerId(mymap, this.dataset.id).setStyle({"color": this.value})}
   li.innerHTML = object["properties"]["display_name"]
-  li.dataset.id = polygon._leaflet_id
-  li.onclick = function(){removeLayerId(mymap, this.dataset.id); this.remove()}
+  delButton.innerHTML = '<i class="bi bi-trash"></i>'
+  delButton.onclick = function(){removeLayerId(mymap, this.dataset.id); this.remove()}
+  li.appendChild(colorPicker)
+  li.appendChild(delButton)
   addedLayers.appendChild(li)
+}
+
+function drawGeoJson(map, geoJson){
+  var out = L.geoJSON(geoJson)
+  out.addTo(map)
+  return out
 }
 
 function toggleTileLayer(map, overwrite=null){
@@ -77,12 +64,13 @@ async function searchObject(object){
 function searchFor(){
   var quary = document.getElementById("addToMap").value;
   var resultList = document.getElementById("searchResults")
+  resultList.innerHTML = ""
   searchObject(quary).then(result => {
     for (var feature of result){
       var li = document.createElement("button")
       li.innerHTML = feature["properties"]["display_name"]
       li.dataset.feature = JSON.stringify(feature)
-      li.onclick = function() {resultList.style.display = "none"; displayObjectOnMap(mymap, JSON.parse(this.dataset.feature))}
+      li.onclick = function() {/*resultList.style.display = "none";*/ displayObjectOnMap(mymap, JSON.parse(this.dataset.feature))}
       resultList.appendChild(li)
     }
     resultList.style.removeProperty("display")
@@ -91,4 +79,10 @@ function searchFor(){
 
 function removeLayerId(map, id){
   map.eachLayer(function(layer){if (layer._leaflet_id == id){layer.removeFrom(map)}})
+}
+
+function getLayerId(map, id){
+  var layer;
+  map.eachLayer(function(l){if (l._leaflet_id == id){console.log("Jeah"); layer = l}})
+  return layer;
 }
