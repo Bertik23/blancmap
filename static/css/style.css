@@ -1,3 +1,8 @@
+:root{
+    --text-color: #FFFFFF;
+    --ligter-dark: #454545;
+}
+
 #mapid {
     height: 100%;
     width: 100%;
@@ -27,4 +32,24 @@ body {
 
 .layerControls{
     float: right;
+}
+
+.btn-delete:hover{
+    color: var(--text-color);
+    background-color: var(--bs-danger);
+    border-color: var(--bs-danger);
+}
+
+.btn-add:hover{
+    color: var(--text-color);
+    background-color: var(--bs-success);
+    border-color: var(--bs-success);
+}
+
+.bg-light-dark{
+    background-color: var(--ligter-dark);
+}
+
+.text-white{
+    color: var(--text-color)
 }

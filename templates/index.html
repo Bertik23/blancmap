@@ -5,16 +5,18 @@
   <div class="row h-100">
     <div class="col">
       <input id="addToMap" type=text>
-      <button onclick="searchFor()">Add to map</button>
-      <ul id="searchResults" class="searchResults" style="display:none"></ul>
+      <button onclick="searchFor()" class="btn btn-primary">Add to map</button>
+      <ul id="searchResults" class="searchResults list-group list-group-flush mt-2" style="display:none"></ul>
     </div>
     <div class="col-6">
       <div id="mapid"></div>
     </div>
     <div class="col">
-      <input id="toggleTileLayer" checked=True type=checkbox onchange="toggleTileLayer(mymap, document.getElementById('toggleTileLayer').checked)">
-      <label for="toggleTileLayer">Toggle background</label>
-      <ul id="addedLayers" class="addedLayer"></ul>
+      <div class="form-check form-switch">
+        <input id="toggleTileLayer" class="form-check-input" checked=True type=checkbox onchange="toggleTileLayer(mymap, document.getElementById('toggleTileLayer').checked)">
+        <label for="toggleTileLayer">Toggle background</label>
+      </div>
+      <ul id="addedLayers" class="addedLayer list-group list-group-flush"></ul>
     </div>
   </div>
 </div>

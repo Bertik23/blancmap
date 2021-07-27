@@ -25,13 +25,17 @@ function displayObjectOnMap(map, object){
   colorPicker.type = "color"
   colorPicker.value = "#3388ff"
   colorPicker.onchange = function (){getLayerId(mymap, this.dataset.id).setStyle({"color": this.value})}
+  colorPicker.classList.add("form-control", "form-control-color")
   li.innerHTML = object["properties"]["display_name"]
+  li.classList.add("list-group-item", "bg-light-dark", "border-secondary", "text-white")
   delButton.innerHTML = '<i class="bi bi-trash"></i>'
-  delButton.onclick = function(){removeLayerId(mymap, this.dataset.id); this.remove()}
+  delButton.onclick = function(){removeLayerId(mymap, this.dataset.id); this.parentNode.parentNode.remove()}
+  delButton.classList.add("btn", "btn-delete", "btn-secondary")
   span.appendChild(colorPicker)
   span.appendChild(delButton)
   li.appendChild(span)
   addedLayers.appendChild(li)
+  roundEdges(document.getElementById("addedLayers"))
 }
 
 function drawGeoJson(map, geoJson){
@@ -69,13 +73,19 @@ function searchFor(){
   resultList.innerHTML = ""
   searchObject(quary).then(result => {
     for (var feature of result){
-      var li = document.createElement("button")
+      var li = document.createElement("li")
+      var button = document.createElement("button")
       li.innerHTML = feature["properties"]["display_name"]
-      li.dataset.feature = JSON.stringify(feature)
-      li.onclick = function() {/*resultList.style.display = "none";*/ displayObjectOnMap(mymap, JSON.parse(this.dataset.feature))}
+      li.classList.add("list-group-item", "bg-light-dark", "border-secondary", "text-white")
+      button.innerHTML = '<i class="bi bi-plus-lg"></i>'
+      button.dataset.feature = JSON.stringify(feature)
+      button.onclick = function() {displayObjectOnMap(mymap, JSON.parse(this.dataset.feature))}
+      button.classList.add("btn", "btn-add", "btn-secondary", "layersControl")
+      li.appendChild(button)
       resultList.appendChild(li)
     }
     resultList.style.removeProperty("display")
+    roundEdges(document.getElementById("searchResults"))
   })
 }
 
@@ -93,4 +103,12 @@ function getLayerId(map, id){
   var layer;
   map.eachLayer(function(l){if (l._leaflet_id == id){console.log("Jeah"); layer = l}})
   return layer;
+}
+
+function roundEdges(element){
+  for (var li of element.children){
+    li.classList.remove("rounded-top", "rounded-bottom")
+  }
+  element.children[0].classList.add("rounded-top")
+  element.children[element.children.length-1].classList.add("rounded-bottom")
 }
