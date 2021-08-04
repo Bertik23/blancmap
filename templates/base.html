@@ -15,9 +15,12 @@
         integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
         crossorigin="">
     </script>
+    <script src="{{ url_for('static', filename='js/leaflet-easyPrint/bundle.js') }}"></script>
 </head>
 <body class="h-100 bg-dark text-white">
     {% block navbar %}
+    {% endblock %}
+    {% block flash_messages %}
     {% endblock %}
     {% block body %}
     {% endblock %}

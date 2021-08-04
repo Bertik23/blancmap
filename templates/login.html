@@ -1,0 +1,26 @@
+{% extends "navbar.html" %}
+
+{% block body %}
+
+<div class="container">
+    <div class="row h-100 justify-content-center">
+        <div class="col-3">
+            <h4>Login</h4>
+            <br>
+            {% from "macros.jinja" import render_field %}
+            <form method=post action="/login">
+                <dl>
+                    {{render_field(form.username)}}
+                    {{render_field(form.password)}}
+                </dl>
+                <p><input type=submit value=Login class="btn btn-primary"></p>
+            </form>
+            
+            {% if error %}
+                <p class="error"><strong>Error:</strong>{{error}}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

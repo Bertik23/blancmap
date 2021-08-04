@@ -3,6 +3,13 @@ var tilelayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
   maxZoom: 19,
   attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap contributors</a>'
 }).addTo(mymap);
+var printer = L.easyPrint({
+	title: 'Save map',
+	position: 'topleft',
+	sizeModes: ["Current", 'A4Portrait', 'A4Landscape'],
+  filename: 'myMap',
+  exportOnly: true,
+}).addTo(mymap);
 
 function displayObjectOnMap(map, object){
   var type = object["geometry"]["type"]
@@ -29,13 +36,18 @@ function displayObjectOnMap(map, object){
   li.innerHTML = object["properties"]["display_name"]
   li.classList.add("list-group-item", "bg-light-dark", "border-secondary", "text-white")
   delButton.innerHTML = '<i class="bi bi-trash"></i>'
-  delButton.onclick = function(){removeLayerId(mymap, this.dataset.id); this.parentNode.parentNode.remove()}
+  delButton.onclick = function(){
+    removeLayerId(mymap, this.dataset.id);
+    this.parentNode.parentNode.remove();
+    removeObjectFromBackend(this.dataset.id)
+  }
   delButton.classList.add("btn", "btn-delete", "btn-secondary")
   span.appendChild(colorPicker)
   span.appendChild(delButton)
   li.appendChild(span)
   addedLayers.appendChild(li)
   roundEdges(document.getElementById("addedLayers"))
+  addObjectToBackend(polygon._leaflet_id, object)
 }
 
 function drawGeoJson(map, geoJson){
@@ -79,7 +91,9 @@ function searchFor(){
       li.classList.add("list-group-item", "bg-light-dark", "border-secondary", "text-white")
       button.innerHTML = '<i class="bi bi-plus-lg"></i>'
       button.dataset.feature = JSON.stringify(feature)
-      button.onclick = function() {displayObjectOnMap(mymap, JSON.parse(this.dataset.feature))}
+      button.onclick = function() {
+        displayObjectOnMap(mymap, JSON.parse(this.dataset.feature))
+      }
       button.classList.add("btn", "btn-add", "btn-secondary", "layersControl")
       li.appendChild(button)
       resultList.appendChild(li)
@@ -112,3 +126,71 @@ function roundEdges(element){
   element.children[0].classList.add("rounded-top")
   element.children[element.children.length-1].classList.add("rounded-bottom")
 }
+
+function addObjectToBackend(id, object){
+  fetch(`/api/updateCurrentMap`, 
+    {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({"id": id, "object": object})
+    }
+  )
+}
+
+function removeObjectFromBackend(id){
+  fetch(`/api/updateCurrentMap?id=${id}`, 
+    {
+      method: "DELETE",
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
+  )
+}
+
+async function getMapFromBackend(name){
+  return await (await fetch(`/api/getMap?name=${name}`)).json()
+}
+
+function loadLastMap(){
+  loadMap("Current")
+}
+
+function loadMap(name){
+  clearMap()
+  getMapFromBackend(name).then(objects => {
+    removeObjectFromBackend("all")
+    for (var i in objects["data"]){
+      displayObjectOnMap(mymap, objects["data"][i])
+    }
+  })
+}
+
+function clearMap(){
+  for (var i of document.getElementById("addedLayers").getElementsByClassName("btn-delete")){
+    i.click()
+  }
+}
+
+function saveMap(){
+  var name = prompt("Enter name of map");
+  if (name != null){
+    getMapFromBackend("Current").then(response => {
+    fetch(`/api/saveMap`, 
+      {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({"name": name, "map": response["data"]})
+      }
+    )
+  }
+  )
+}
+
+}
+
+loadLastMap()
