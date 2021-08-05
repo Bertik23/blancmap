@@ -1,4 +1,4 @@
-from maps import getCurrentMap, updateCurrentMap, getMap, updateMap
+from maps import getCurrentMap, updateCurrentMap, getMap, updateMap, deleteMap
 import loadEnv
 
 import logging
@@ -16,6 +16,15 @@ logger = logging.Logger("main", logging.INFO)
 
 app = Flask("Blancmap")
 app.secret_key = b"_randomThingo"
+
+
+def NOT_LOGGED_IN():
+    return jsonify(
+        {
+            "status": "failed",
+            "message": "Not logged in or corrupted user id"
+        }
+    ), 422
 
 
 def renderTemplate(template, **kwargs):
@@ -87,9 +96,15 @@ def site_login():
                 category="success"
             )
             session["userId"] = out[0]
-            return redirect(url_for('site_index'))
+            return redirect(request.args.get("next", url_for('site_index')))
 
     return renderTemplate("login.html", form=form)
+
+
+@app.route("/user/<uid>")
+def site_user(uid):
+    user = getUser(uid)
+    return renderTemplate("user_profile.html", dUser=user)
 
 
 @app.route("/api/logout")
@@ -112,12 +127,7 @@ def api_logout():
 def api_updateCurrentMap():
     user = getUser(session.get("userId"))
     if user is None:
-        return jsonify(
-            {
-                "status": "failed",
-                "message": "Not logged in or corrupted user id"
-            }
-        ), 422
+        return NOT_LOGGED_IN()
     if request.method == "POST":
         data = request.get_json()
         id_ = data["id"]
@@ -154,15 +164,10 @@ def api_updateCurrentMap():
 
 @app.route("/api/getMap")
 def api_getMap():
-    user = getUser(session.get("userId"))
+    user = getUser(request.args.get("userId", session.get("userId")))
     name = request.args.get("name", None)
     if user is None:
-        return jsonify(
-            {
-                "status": "failed",
-                "message": "Not logged in or corrupted user id"
-            }
-        ), 422
+        return NOT_LOGGED_IN()
     if name is None:
         return jsonify(
             {
@@ -183,12 +188,7 @@ def api_getMap():
 def api_saveMap():
     user = getUser(session.get("userId"))
     if user is None:
-        return jsonify(
-            {
-                "status": "failed",
-                "message": "Not logged in or corrupted user id"
-            }
-        ), 422
+        return NOT_LOGGED_IN()
     data = request.get_json()
     name = data["name"]
     mapData = data["map"]
@@ -201,6 +201,20 @@ def api_saveMap():
                 f"Map with {name = } "
                 "successfully saved."
             )
+        }
+    )
+
+
+@app.route("/api/deleteMap", methods=["DELETE"])
+def api_deleteMap():
+    user = getUser(session.get("userId", None))
+    if user is None:
+        return NOT_LOGGED_IN()
+    deleteMap(user.id, request.args.get("name", None))
+    return jsonify(
+        {
+            "status": "success",
+            "message": f"Map was successfully deleted."
         }
     )
 

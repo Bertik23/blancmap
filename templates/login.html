@@ -10,7 +10,7 @@
             <h4>Login</h4>
             <br>
             {% from "macros.jinja" import render_field %}
-            <form method=post action="/login">
+            <form method=post action="/login?next={{ request.args.get('next', '/') }}">
                 <dl>
                     {{render_field(form.username)}}
                     {{render_field(form.password)}}

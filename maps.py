@@ -59,3 +59,17 @@ def getUserMapsList(userId):
     close(con, cur)
 
     return out
+
+
+def deleteMap(userId, name):
+    if name is None:
+        return
+    con, cur = connect()
+
+    cur.execute(
+        "DELETE FROM maps WHERE userId = ? AND name = ?",
+        (userId, name)
+    )
+
+    con.commit()
+    close(con, cur)

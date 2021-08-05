@@ -165,17 +165,32 @@ function removeObjectFromBackend(id){
   )
 }
 
-async function getMapFromBackend(name){
-  return await (await fetch(`/api/getMap?name=${name}`)).json()
+async function getMapFromBackend(name, userId){
+  var url = `/api/getMap?name=${name}`
+  if (userId){
+    url += `&userId=${userId}`
+  }
+  return await (await fetch(url)).json()
 }
 
 function loadLastMap(){
-  loadMap("Current")
+  const urlParams = new URLSearchParams(window.location.search);
+  const mapName = urlParams.get('map');
+  const uid = urlParams.get("userId")
+
+  console.log(mapName, uid)
+  if (mapName == null){
+    loadMap("Current")
+  }
+  else {
+    console.log(mapName, uid)
+    loadMap(mapName, uid)
+  }
 }
 
-function loadMap(name){
+function loadMap(name, uid){
   clearMap()
-  getMapFromBackend(name).then(objects => {
+  getMapFromBackend(name, uid).then(objects => {
     removeObjectFromBackend("all")
     for (var i in objects["data"]){
       displayObjectOnMap(mymap, objects["data"][i])
@@ -205,7 +220,17 @@ function saveMap(){
   }
   )
 }
+}
 
+function deleteMap(name){
+  fetch(`/api/deleteMap?name=${name}`,
+    {
+      method: "DELETE",
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
+  )
 }
 
 loadLastMap()

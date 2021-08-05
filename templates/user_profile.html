@@ -1,0 +1,28 @@
+{% extends "navbar.html" %}
+
+{% block title %}{{ dUser.name }}{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="row">
+    {% for map in dUser.mapsList %}
+    {% if map != "Currenta" %}
+    <div class="col-lg-3">
+        <div class="card text-white bg-light-dark mb-3" style="max-width: 18rem;">
+            <img class="card-img-top" alt="Map preview">
+            <div class="card-body">
+            <h5 class="card-title">{{ map }}</h5>
+            <p class="card-text">Map description</p>
+            <a class="btn btn-primary" href="{{ url_for('site_index') }}?userId={{ dUser.id }}&map={{ map }}">Load</a>
+
+            {% if user.id == dUser.id %}
+            <button class="btn btn-delete btn-secondary" onclick="deleteMap('{{map}}')"><i class="bi bi-trash"></i></button>
+            {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+    </div>
+</div>
+{% endblock %}
