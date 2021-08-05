@@ -16,6 +16,7 @@
         crossorigin="">
     </script>
     <script src="{{ url_for('static', filename='js/leaflet-easyPrint/bundle.js') }}"></script>
+    <title>{% block title %}{% endblock %} - Blancmap</title>
 </head>
 <body class="h-100 bg-dark text-white">
     {% block navbar %}
