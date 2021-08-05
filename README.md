@@ -5,6 +5,7 @@ Blanc map is a project aiming to make a online blanc map maker.
 * [x] Save colors
 * [ ] Bundles
 * [x] Share
+* [ ] Map previews
 
 # Contributing
 If you want to contribute to this project head to [my discord server](https://discord.gg/eGQ4Ga9)
