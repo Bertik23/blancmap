@@ -17,6 +17,10 @@
     </script>
     <script src="{{ url_for('static', filename='js/leaflet-easyPrint/bundle.js') }}"></script>
     <title>{% block title %}{% endblock %} - Blancmap</title>
+    <meta property="og:title" content="{% block title %}{% endblock %} - Blancmap">
+    <meta property="og:description" content="Blancmap - Online blind map editor">
+    <meta property="og:url" content="{{ url_for(request.endpoint, **request.view_args) }}">
+    <meta property="og:type" content="website">
 </head>
 <body class="h-100 bg-dark text-white">
     {% block navbar %}
