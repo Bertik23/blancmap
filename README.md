@@ -2,7 +2,7 @@
 Blanc map is a project aiming to make a online blanc map maker.
 
 # Todo list
-* [ ] Save colors
+* [x] Save colors
 * [ ] Bundles
 * [ ] Share
 

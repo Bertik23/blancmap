@@ -12,6 +12,7 @@ var printer = L.easyPrint({
 }).addTo(mymap);
 
 function displayObjectOnMap(map, object){
+  object["properties"]["color"] = object["properties"]["color"] || "#3399ff"
   var type = object["geometry"]["type"]
   var bbox = object["bbox"]
 
@@ -27,11 +28,18 @@ function displayObjectOnMap(map, object){
   var colorPicker = document.createElement("input")
   for (a of [li, delButton, colorPicker, span]){
     a.dataset.id = polygon._leaflet_id;
+    a.dataset.geoJSON = JSON.stringify(object)
   }
   span.classList.add("layerControls")
   colorPicker.type = "color"
-  colorPicker.value = "#3388ff"
-  colorPicker.onchange = function (){getLayerId(mymap, this.dataset.id).setStyle({"color": this.value})}
+  colorPicker.value = object["properties"]["color"]
+  colorPicker.onchange = function (){
+    getLayerId(mymap, this.dataset.id).setStyle({"color": this.value});
+    removeObjectFromBackend(this.dataset.id);
+    o = JSON.parse(this.dataset.geoJSON)
+    o["properties"]["color"] = this.value
+    addObjectToBackend(this.dataset.id, o)
+  }
   colorPicker.classList.add("form-control", "form-control-color")
   li.innerHTML = object["properties"]["display_name"]
   li.classList.add("list-group-item", "bg-light-dark", "border-secondary", "text-white")
@@ -51,7 +59,14 @@ function displayObjectOnMap(map, object){
 }
 
 function drawGeoJson(map, geoJson){
-  var out = L.geoJSON(geoJson)
+  var out = L.geoJSON(
+    geoJson,
+    {
+      style: function(feature){
+        return {color: feature.properties.color}
+      }
+    }
+  )
   out.addTo(map)
   return out
 }
