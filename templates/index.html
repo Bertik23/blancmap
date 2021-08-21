@@ -7,7 +7,16 @@
   <div class="row h-100">
     <div class="col">
       <input id="addToMap" type=text>
-      <button onclick="searchFor()" class="btn btn-primary">Add to map</button>
+      <button id="addToMapBtn" onclick="searchFor()" class="btn btn-primary">Add to map</button>
+      <script>
+        var input = document.getElementById("addToMap");
+        input.addEventListener("keyup", function(event) {
+          if (event.keyCode === 13) {
+           event.preventDefault();
+           document.getElementById("addToMapBtn").click();
+          }
+        });
+        </script>
       <ul id="searchResults" class="searchResults list-group list-group-flush mt-2" style="display:none"></ul>
     </div>
     <div class="col-6">
