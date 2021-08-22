@@ -3,6 +3,7 @@
 {% block title %}Map Editor{% endblock %}
 
 {% block body %}
+{% raw %}
 <div class="container-fluid h-100">
   <div class="row h-100">
     <div class="col">
@@ -27,8 +28,17 @@
         <input id="toggleTileLayer" class="form-check-input" checked=True type=checkbox onchange="toggleTileLayer(mymap, document.getElementById('toggleTileLayer').checked)">
         <label for="toggleTileLayer">Toggle background</label>
       </div>
-      <ul id="addedLayers" class="addedLayer list-group list-group-flush"></ul>
+      <div id="addedData">
+        <ul id="addedLayersGroups" class="addedLayer list-group list-group-flush">
+          <layersGroups v-for="group in layersGroups" v-bind:name="group.name" v-bind:layers="group.layers" v-bind:layer-groups="layersGroups" class="list-group-item bg-light-dark border-secondary text-white"></layersGroups>
+        </ul>
+        <br>
+        <ul id="addedLayers" class="addedLayer list-group list-group-flush">
+          <layer v-for="layer in layers" v-bind:layer="layer" v-bind:layer-groups="layerGroups"></layer>
+        </ul>
+      </div>
     </div>
   </div>
 </div>
+{% endraw %}
 {% endblock %}

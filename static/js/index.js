@@ -11,6 +11,110 @@ var printer = L.easyPrint({
   exportOnly: true,
 }).addTo(mymap);
 
+var layerGroups = [{name: "Group 1", layers: []}, {name: "Group 2", layers: []}, {name: "Group 3", layers: []}]
+
+Vue.component("layersgroups", {
+  props: ["name", "layers", "layerGroups"],
+  template:
+    `<li>
+      <details>
+        <summary>
+          {{ name }}
+          <layercontrols></layercontrols>
+        </summary>
+        <ul>
+          <layer v-for="layer in layers" v-bind:layer="layer" v-bind:layerGroups="layerGroups"></layer>
+        </ul>
+      </details>
+    </li>`
+})
+
+Vue.component("layercontrols", {
+  props: ["layer", "layerGroups"],
+  template:
+    `<span class="layerControls">
+      <select v-bind:id="layer.name" class="form-select" v-model=group v-on:change="changeGroup(group)">
+        <option value="null" v-bind:selected="layer.group == null">None</option>
+        <option v-for="group in layerGroups" v-bind:value="group.name" selected="(layer.group != null) ? (layer.group.name == group.name) : false">{{ group.name }}</option>
+      </select>
+      <input type="color" class="form-control form-control-color" v-model=layer.color v-on:change="changeColor(layer.color)">
+      <button class="btn btn-delete btn-secondary" v-on:click="deleteLayer(layer)">
+        <i class="bi bi-trash"></i>
+      </button>
+    </span>`,
+    methods: {
+      changeColor: function(color){
+        console.log("Changing color to: ", color)
+        this.layer.polygon.setStyle({color: color})
+      },
+      deleteLayer: function(layer){
+        layer.polygon.removeFrom(mymap);
+        this.$parent.$parent.layers.splice(this.$parent.$parent.layers.indexOf(layer), 1)
+      },
+      changeGroup: function(group){
+        if (this.layer.group != null){
+          if (group == this.layer.group.name) return
+        }
+        if (group == "null"){
+          this.layer.group.layers.splice(this.layer.group.layers.indexOf(this.layer), 1)
+          this.layer.group = null
+          addedLayersL.layers.push(this.layer)
+        }
+        else{
+          for (g of this.layerGroups){
+            console.log(g, group, (g.name == group))
+            if (g.name == group){
+              if (this.layer.group == null) addedLayersL.layers.splice(addedLayersL.layers.indexOf(this.layer), 1)
+              else this.layer.group.layers.splice(this.layer.group.layers.indexOf(this.layer), 1)
+              g.layers.push(this.layer)
+              this.layer.group = g
+              break
+            }
+          }
+        }
+      }
+    }
+})
+
+
+Vue.component("layer", {
+  props: ["layer", "layerGroups"],
+  template:
+   `<li class="list-group-item bg-light-dark border-secondary text-white">
+      {{ layer.name }}
+      <layercontrols v-bind:layer=layer v-bind:layerGroups=layerGroups></layercontrols>
+    </li>`
+})
+
+
+var addedLayersGroups = new Vue({
+  el: "#addedLayersGroups",
+  data: {
+    layersGroups: layerGroups
+  },
+  updated: function(){
+    if (this.layersGroups.length > 0) roundEdges(this.$el)
+  },
+  mounted: function(){
+    if (this.layersGroups.length > 0)roundEdges(this.$el)
+  }
+})
+
+
+var addedLayersL = new Vue({
+  el: "#addedLayers",
+  data: {
+    layers: [],
+    layerGroups: layerGroups
+  },
+  updated: function(){
+    if (this.layers.length > 0)roundEdges(this.$el)
+  },
+  mounted: function(){
+    if (this.layers.length > 0) roundEdges(this.$el)
+  }
+})
+
 function displayObjectOnMap(map, object){
   object["properties"]["color"] = object["properties"]["color"] || "#3399ff"
   var type = object["geometry"]["type"]
@@ -20,17 +124,28 @@ function displayObjectOnMap(map, object){
   console.log("Added to map")
   mymap.fitBounds([[bbox[1], bbox[0]], [bbox[3], bbox[2]]]);
 
+  addedLayersL.layers.push({
+    name: object["properties"]["display_name"],
+    color: object["properties"]["color"],
+    group: null,
+    polygon: polygon,
+  })
+  console.log(addedLayersL)
+  return
+  console.log(addedLayersL.layers)
+
 
   var addedLayers = document.getElementById("addedLayers")
   var li = document.createElement("li")
-  var span = document.createElement("span")
+  var layerControlsSpan = document.createElement("span")
   var delButton = document.createElement("button")
   var colorPicker = document.createElement("input")
-  for (a of [li, delButton, colorPicker, span]){
+  var groupSelector = document.createElement("select")
+  for (a of [li, delButton, colorPicker, layerControlsSpan]){
     a.dataset.id = polygon._leaflet_id;
     a.dataset.geoJSON = JSON.stringify(object)
   }
-  span.classList.add("layerControls")
+  layerControlsSpan.classList.add("layerControls")
   colorPicker.type = "color"
   colorPicker.value = object["properties"]["color"]
   colorPicker.onchange = function (){
@@ -50,9 +165,9 @@ function displayObjectOnMap(map, object){
     removeObjectFromBackend(this.dataset.id)
   }
   delButton.classList.add("btn", "btn-delete", "btn-secondary")
-  span.appendChild(colorPicker)
-  span.appendChild(delButton)
-  li.appendChild(span)
+  layerControlsSpan.appendChild(colorPicker)
+  layerControlsSpan.appendChild(delButton)
+  li.appendChild(layerControlsSpan)
   addedLayers.appendChild(li)
   roundEdges(document.getElementById("addedLayers"))
   addObjectToBackend(polygon._leaflet_id, object)
@@ -130,7 +245,7 @@ function removeLayerId(map, id){
  */
 function getLayerId(map, id){
   var layer;
-  map.eachLayer(function(l){if (l._leaflet_id == id){console.log("Jeah"); layer = l}})
+  map.eachLayer(function(l){if (l._leaflet_id == id){layer = l}})
   return layer;
 }
 
