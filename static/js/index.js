@@ -4,12 +4,17 @@ var tilelayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
   attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap contributors</a>'
 }).addTo(mymap);
 var printer = L.easyPrint({
-	title: 'Save map',
-	position: 'topleft',
-	sizeModes: ["Current", 'A4Portrait', 'A4Landscape'],
+  title: 'Save map',
+  position: 'topleft',
+  sizeModes: ["Current", 'A4Portrait', 'A4Landscape'],
   filename: 'myMap',
   exportOnly: true,
 }).addTo(mymap);
+
+const snowflake = new FlakeId({
+  mid : 42, //optional, define machine id
+  timeOffset : (2021-1970)*31536000*1000 //optional, define a offset time
+});
 
 var layerGroups = [{name: "Group 1", layers: []}, {name: "Group 2", layers: []}, {name: "Group 3", layers: []}]
 
@@ -34,8 +39,12 @@ Vue.component("layercontrols", {
   template:
     `<span class="layerControls">
       <select v-bind:id="layer.name" class="form-select" v-model=group v-on:change="changeGroup(group)">
-        <option value="null" v-bind:selected="layer.group == null">None</option>
-        <option v-for="group in layerGroups" v-bind:value="group.name" selected="(layer.group != null) ? (layer.group.name == group.name) : false">{{ group.name }}</option>
+        <option value="null" v-bind:selected="layer.group == null">
+          None
+        </option>
+        <option v-for="group in layerGroups" v-bind:value="group.name" selected="(layer.group != null) ? (layer.group.name == group.name) : false">
+          {{ group.name }}
+        </option>
       </select>
       <input type="color" class="form-control form-control-color" v-model=layer.color v-on:change="changeColor(layer.color)">
       <button class="btn btn-delete btn-secondary" v-on:click="deleteLayer(layer)">
@@ -46,6 +55,51 @@ Vue.component("layercontrols", {
       changeColor: function(color){
         console.log("Changing color to: ", color)
         this.layer.polygon.setStyle({color: color})
+      },
+      deleteLayer: function(layer){
+        layer.polygon.removeFrom(mymap);
+        this.$parent.$parent.layers.splice(this.$parent.$parent.layers.indexOf(layer), 1)
+      },
+      changeGroup: function(group){
+        if (this.layer.group != null){
+          if (group == this.layer.group.name) return
+        }
+        if (group == "null"){
+          this.layer.group.layers.splice(this.layer.group.layers.indexOf(this.layer), 1)
+          this.layer.group = null
+          addedLayersL.layers.push(this.layer)
+        }
+        else{
+          for (g of this.layerGroups){
+            console.log(g, group, (g.name == group))
+            if (g.name == group){
+              if (this.layer.group == null) addedLayersL.layers.splice(addedLayersL.layers.indexOf(this.layer), 1)
+              else this.layer.group.layers.splice(this.layer.group.layers.indexOf(this.layer), 1)
+              g.layers.push(this.layer)
+              this.layer.group = g
+              break
+            }
+          }
+        }
+      }
+    }
+})
+
+Vue.component("layergroupcontrols", {
+  props: ["layer", "layerGroups", "layers"],
+  template:
+    `<span class="layerControls">
+      <input type="color" class="form-control form-control-color" v-model=color v-on:change="changeColor(color)">
+      <button class="btn btn-delete btn-secondary" v-on:click="deleteLayer(layer)">
+        <i class="bi bi-trash"></i>
+      </button>
+    </span>`,
+    methods: {
+      changeColor: function(color){
+        console.log("Changing color to: ", color)
+        for (layer of this.$parent.$children){
+          layer.$children
+        }
       },
       deleteLayer: function(layer){
         layer.polygon.removeFrom(mymap);
@@ -116,61 +170,33 @@ var addedLayersL = new Vue({
 })
 
 function displayObjectOnMap(map, object){
-  object["properties"]["color"] = object["properties"]["color"] || "#3399ff"
-  var type = object["geometry"]["type"]
-  var bbox = object["bbox"]
+  if (!object.hasOwnProperty("id")){
+    object["properties"]["color"] = object["properties"]["color"] || "#3399ff"
+    var id = snowflake.gen()
+    var bbox = object["bbox"]
 
-  var polygon = drawGeoJson(mymap, object)
+    var polygon = drawGeoJson(mymap, object)
+    var layer = {
+      name: object["properties"]["display_name"],
+      color: object["properties"]["color"],
+      group: null,
+      polygon: polygon,
+      id: id,
+      geoJson: object
+    }
+  }else{
+    var id = object.id;
+    var bbox = object.geoJson.bbox;
+    var polygon = drawGeoJson(mymap, object.geoJson)
+    var layer = object;
+    layer["polygon"] = polygon;
+  }
   console.log("Added to map")
   mymap.fitBounds([[bbox[1], bbox[0]], [bbox[3], bbox[2]]]);
 
-  addedLayersL.layers.push({
-    name: object["properties"]["display_name"],
-    color: object["properties"]["color"],
-    group: null,
-    polygon: polygon,
-  })
-  console.log(addedLayersL)
-  return
-  console.log(addedLayersL.layers)
-
-
-  var addedLayers = document.getElementById("addedLayers")
-  var li = document.createElement("li")
-  var layerControlsSpan = document.createElement("span")
-  var delButton = document.createElement("button")
-  var colorPicker = document.createElement("input")
-  var groupSelector = document.createElement("select")
-  for (a of [li, delButton, colorPicker, layerControlsSpan]){
-    a.dataset.id = polygon._leaflet_id;
-    a.dataset.geoJSON = JSON.stringify(object)
-  }
-  layerControlsSpan.classList.add("layerControls")
-  colorPicker.type = "color"
-  colorPicker.value = object["properties"]["color"]
-  colorPicker.onchange = function (){
-    getLayerId(mymap, this.dataset.id).setStyle({"color": this.value});
-    removeObjectFromBackend(this.dataset.id);
-    o = JSON.parse(this.dataset.geoJSON)
-    o["properties"]["color"] = this.value
-    addObjectToBackend(this.dataset.id, o)
-  }
-  colorPicker.classList.add("form-control", "form-control-color")
-  li.innerHTML = object["properties"]["display_name"]
-  li.classList.add("list-group-item", "bg-light-dark", "border-secondary", "text-white")
-  delButton.innerHTML = '<i class="bi bi-trash"></i>'
-  delButton.onclick = function(){
-    removeLayerId(mymap, this.dataset.id);
-    this.parentNode.parentNode.remove();
-    removeObjectFromBackend(this.dataset.id)
-  }
-  delButton.classList.add("btn", "btn-delete", "btn-secondary")
-  layerControlsSpan.appendChild(colorPicker)
-  layerControlsSpan.appendChild(delButton)
-  li.appendChild(layerControlsSpan)
-  addedLayers.appendChild(li)
-  roundEdges(document.getElementById("addedLayers"))
-  addObjectToBackend(polygon._leaflet_id, object)
+  addedLayersL.layers.push(layer)
+  console.log(layer)
+  addObjectToBackend(layer)
 }
 
 function drawGeoJson(map, geoJson){
@@ -257,14 +283,18 @@ function roundEdges(element){
   element.children[element.children.length-1].classList.add("rounded-bottom")
 }
 
-function addObjectToBackend(id, object){
+function addObjectToBackend(object){
+  function replacer(key,value){
+    if (key=="polygon") return undefined;
+    else return value;
+  }
   fetch(`/api/updateCurrentMap`, 
     {
       method: "POST",
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({"id": id, "object": object})
+      body: JSON.stringify(object, replacer)
     }
   )
 }
@@ -306,6 +336,7 @@ function loadLastMap(){
 function loadMap(name, uid){
   clearMap()
   getMapFromBackend(name, uid).then(objects => {
+    console.log(objects)
     removeObjectFromBackend("all")
     for (var i in objects["data"]){
       displayObjectOnMap(mymap, objects["data"][i])

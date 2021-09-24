@@ -6,6 +6,8 @@ from forms import LoginForm, RegistrationForm
 from maps import deleteMap, getCurrentMap, getMap, updateCurrentMap, updateMap
 from user import getUser
 
+import json
+
 
 @app.route("/api/logout")
 def api_logout():
@@ -31,10 +33,10 @@ def api_updateCurrentMap():
     if request.method == "POST":
         data = request.get_json()
         id_ = data["id"]
-        object = data["object"]
         mapData = getCurrentMap(user.id)
-        mapData[id_] = object
+        mapData[id_] = data
         updateCurrentMap(user.id, mapData)
+        # print(json.dumps(getCurrentMap(user.id), indent=4))
         return jsonify(
             {
                 "status": "success",
@@ -47,9 +49,10 @@ def api_updateCurrentMap():
     elif request.method == "DELETE":
         id_ = request.args["id"]
         if id_ == "all":
+            mapData = {}
+        else:
             mapData = getCurrentMap(user.id)
             mapData.pop(id_, None)
-        mapData = {}
         updateCurrentMap(user.id, mapData)
         return jsonify(
             {
@@ -75,6 +78,7 @@ def api_getMap():
                 "message": "No name supplied"
             }
         ), 400
+    # print(json.dumps(getMap(user.id, name), indent=4))
     return jsonify(
         {
             "status": "success",
