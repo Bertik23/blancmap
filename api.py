@@ -1,4 +1,5 @@
 from flask import flash, jsonify, request, session
+import requests
 
 from app import NOT_LOGGED_IN, app
 from database import connect
@@ -119,5 +120,28 @@ def api_deleteMap():
         {
             "status": "success",
             "message": f"Map was successfully deleted."
+        }
+    )
+
+
+@app.route("/api/searchObject")
+def api_searchObject():
+    query = request.args.get("query", None)
+    if query is None:
+        return jsonify(
+            {
+                "status": "failed",
+                "message": "No query was provided"
+            }
+        ), 400
+    r = requests.get(
+        "https://nominatim.openstreetmap.org/search",
+        params=dict(q=query, format="geojson", polygon_geojson=1)
+    )
+    return jsonify(
+        {
+            "status": "success",
+            "message": "Here is your data",
+            "data": r.json()["features"]
         }
     )
