@@ -10,6 +10,12 @@ from user import getUser
 import json
 
 
+@app.after_request
+def api_after(f):
+    f.headers.add('Access-Control-Allow-Origin', '*')
+    return f
+
+
 @app.route("/api/logout")
 def api_logout():
     uId = session.get("userId", None)
@@ -127,6 +133,8 @@ def api_deleteMap():
 @app.route("/api/searchObject")
 def api_searchObject():
     query = request.args.get("query", None)
+    print(request.args)
+    print(request.headers)
     if query is None:
         return jsonify(
             {
